@@ -34,7 +34,7 @@
       </div>
 
       <!-- Meta info -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
         <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
           <p class="text-gray-500 text-xs mb-1">Created</p>
           <p class="text-white text-sm font-medium">{{ project.createdAt }}</p>
@@ -53,6 +53,12 @@
           <p class="text-gray-500 text-xs mb-1">Backend</p>
           <p :class="project.backendEnabled ? 'text-blue-400' : 'text-gray-500'" class="text-sm font-medium">
             {{ project.backendEnabled ? 'Enabled' : 'Disabled' }}
+          </p>
+        </div>
+        <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
+          <p class="text-gray-500 text-xs mb-1">Dev Server</p>
+          <p :class="project.devServerEnabled ? 'text-purple-400' : 'text-gray-500'" class="text-sm font-medium">
+            {{ project.devServerEnabled ? 'Enabled' : 'Disabled' }}
           </p>
         </div>
       </div>
@@ -174,6 +180,61 @@
           <InfoField label="Domain" :value="project.backend.domain" type="domain" />
         </div>
       </div>
+      <!-- Dev Server Section -->
+      <div v-if="project.devServerEnabled" class="bg-gray-900 border border-purple-500/20 rounded-xl p-6 mt-5">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-white font-semibold text-base flex items-center gap-2">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            Dev Server
+            <span class="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20">Development</span>
+          </h2>
+          <button
+            @click="deployDev"
+            :disabled="deployingDev || devDeployed"
+            :class="devDeployed
+              ? 'bg-green-600 cursor-default'
+              : 'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-900 disabled:cursor-not-allowed'"
+            class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-gray-900"
+          >
+            <template v-if="devDeployed">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Deployed!
+            </template>
+            <template v-else-if="deployingDev">
+              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Deploying...
+            </template>
+            <template v-else>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Deploy Dev
+            </template>
+          </button>
+        </div>
+
+        <!-- Success banner -->
+        <div v-if="devDeployed" class="mb-4 flex items-center gap-2 bg-green-950 border border-green-800 rounded-lg px-4 py-3 text-sm text-green-400">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Dev server deployed successfully! Development environment is ready.
+        </div>
+
+        <p class="text-gray-500 text-sm">
+          개발 서버가 활성화되어 있습니다. 프로덕션 배포 전에 개발 환경에서 먼저 테스트할 수 있습니다.
+        </p>
+      </div>
     </div>
   </AppLayout>
 </template>
@@ -208,6 +269,8 @@ const deployingFrontend = ref(false)
 const frontendDeployed = ref(false)
 const deployingBackend = ref(false)
 const backendDeployed = ref(false)
+const deployingDev = ref(false)
+const devDeployed = ref(false)
 
 async function deployFrontend() {
   deployingFrontend.value = true
@@ -223,6 +286,13 @@ async function deployBackend() {
   deployingBackend.value = false
   backendDeployed.value = true
   store.updateProject(project.value.id, { status: 'active' })
+}
+
+async function deployDev() {
+  deployingDev.value = true
+  await new Promise((r) => setTimeout(r, 1500))
+  deployingDev.value = false
+  devDeployed.value = true
 }
 
 function statusClass(status) {

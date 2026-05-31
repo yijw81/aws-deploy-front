@@ -36,7 +36,7 @@
             ></textarea>
           </div>
           <!-- Service toggles -->
-          <div class="flex gap-6 pt-1">
+          <div class="flex flex-wrap gap-6 pt-1">
             <label class="flex items-center gap-3 cursor-pointer group">
               <div class="relative">
                 <input type="checkbox" v-model="form.frontendEnabled" class="sr-only" />
@@ -52,6 +52,14 @@
                 <div :class="form.backendEnabled ? 'translate-x-4' : 'translate-x-0'" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
               </div>
               <span class="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Backend</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <div class="relative">
+                <input type="checkbox" v-model="form.devServerEnabled" class="sr-only" />
+                <div :class="form.devServerEnabled ? 'bg-purple-500' : 'bg-gray-700'" class="w-10 h-6 rounded-full transition-colors"></div>
+                <div :class="form.devServerEnabled ? 'translate-x-4' : 'translate-x-0'" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
+              </div>
+              <span class="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Dev Server</span>
             </label>
           </div>
         </div>
@@ -182,6 +190,7 @@ const form = ref({
   description: '',
   frontendEnabled: true,
   backendEnabled: true,
+  devServerEnabled: false,
   frontend: {
     githubUrl: '',
     s3Bucket: '',

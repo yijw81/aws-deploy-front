@@ -11,6 +11,7 @@ export const useProjectsStore = defineStore('projects', () => {
       createdAt: '2025-01-15',
       frontendEnabled: true,
       backendEnabled: true,
+      devServerEnabled: true,
       frontend: {
         githubUrl: 'https://github.com/org/my-webapp-frontend',
         s3Bucket: 'my-webapp-frontend-prod',
@@ -32,6 +33,7 @@ export const useProjectsStore = defineStore('projects', () => {
       createdAt: '2025-02-20',
       frontendEnabled: true,
       backendEnabled: false,
+      devServerEnabled: false,
       frontend: {
         githubUrl: 'https://github.com/org/static-site',
         s3Bucket: 'static-site-prod',
@@ -53,6 +55,7 @@ export const useProjectsStore = defineStore('projects', () => {
       createdAt: '2025-03-10',
       frontendEnabled: false,
       backendEnabled: true,
+      devServerEnabled: true,
       frontend: {
         githubUrl: '',
         s3Bucket: '',
