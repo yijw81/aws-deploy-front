@@ -9,15 +9,15 @@
               d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
           </svg>
         </div>
-        <h1 class="text-2xl font-bold text-white">AWS Deploy Console</h1>
-        <p class="text-gray-400 mt-1 text-sm">Sign in to manage your deployments</p>
+        <h1 class="text-2xl font-bold text-white">{{ t('login.title') }}</h1>
+        <p class="text-gray-400 mt-1 text-sm">{{ t('login.subtitle') }}</p>
       </div>
 
       <!-- Card -->
       <div class="bg-gray-900 border border-gray-800 rounded-xl shadow-xl p-8">
         <form @submit.prevent="handleLogin" class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Email address</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">{{ t('login.email') }}</label>
             <input
               v-model="form.email"
               type="email"
@@ -28,7 +28,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">{{ t('login.password') }}</label>
             <input
               v-model="form.password"
               type="password"
@@ -57,9 +57,9 @@
                 <path class="opacity-75" fill="currentColor"
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Signing in...
+              {{ t('login.signingIn') }}
             </span>
-            <span v-else>Sign in</span>
+            <span v-else>{{ t('login.signIn') }}</span>
           </button>
         </form>
 
@@ -78,7 +78,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const router = useRouter()
 const loading = ref(false)
 const error = ref('')

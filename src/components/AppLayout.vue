@@ -16,7 +16,7 @@
               <span class="text-white font-semibold text-lg tracking-tight">AWS Deploy</span>
             </div>
             <span class="text-gray-600 text-sm hidden sm:block">|</span>
-            <span class="text-gray-400 text-sm hidden sm:block">Management Console</span>
+            <span class="text-gray-400 text-sm hidden sm:block">{{ t('nav.console') }}</span>
           </div>
 
           <!-- Nav links -->
@@ -24,12 +24,21 @@
             <router-link to="/"
               class="px-3 py-2 rounded text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
               :class="{ 'text-white bg-gray-800': $route.path === '/' || $route.path.startsWith('/projects') }">
-              Projects
+              {{ t('nav.projects') }}
             </router-link>
           </nav>
 
-          <!-- User menu -->
+          <!-- User menu + Language toggle -->
           <div class="flex items-center gap-3">
+            <!-- Language toggle -->
+            <button
+              @click="toggleLocale"
+              class="px-2.5 py-1 text-xs font-semibold text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 rounded transition-colors tracking-wider"
+              :title="locale === 'ko' ? 'Switch to English' : '한국어로 전환'"
+            >
+              {{ locale === 'ko' ? 'EN' : '한국어' }}
+            </button>
+
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                 {{ userInitial }}
@@ -38,7 +47,7 @@
             </div>
             <button @click="logout"
               class="px-3 py-1.5 text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 rounded transition-colors">
-              Sign Out
+              {{ t('nav.signOut') }}
             </button>
           </div>
         </div>
@@ -80,8 +89,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
-const props = defineProps({
+defineProps({
   breadcrumbs: {
     type: Array,
     default: () => [],
@@ -89,8 +99,15 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const { t, locale } = useI18n()
+
 const userEmail = localStorage.getItem('auth_email') || 'user@example.com'
 const userInitial = computed(() => userEmail.charAt(0).toUpperCase())
+
+function toggleLocale() {
+  locale.value = locale.value === 'ko' ? 'en' : 'ko'
+  localStorage.setItem('locale', locale.value)
+}
 
 function logout() {
   localStorage.removeItem('auth_token')
