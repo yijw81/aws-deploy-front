@@ -1,6 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+function randomId(len = 8) {
+  return Math.random().toString(36).substring(2, 2 + len).toUpperCase()
+}
+
+function generateS3Name(projectName) {
+  const slug = projectName.toLowerCase().replace(/[^a-z0-9]/g, '-')
+  return `${slug}-frontend-${randomId(6).toLowerCase()}`
+}
+
+function generateCloudfrontName() {
+  return `E${randomId(13)}`
+}
+
 export const useProjectsStore = defineStore('projects', () => {
   const projects = ref([
     {
@@ -24,6 +37,10 @@ export const useProjectsStore = defineStore('projects', () => {
         ecsName: 'my-webapp-service',
         domain: 'api.mywebapp.com',
       },
+      devServer: {
+        frontendPort: 5173,
+        backendPort: 3000,
+      },
     },
     {
       id: '2',
@@ -45,6 +62,10 @@ export const useProjectsStore = defineStore('projects', () => {
         dbName: '',
         ecsName: '',
         domain: '',
+      },
+      devServer: {
+        frontendPort: 5173,
+        backendPort: 3000,
       },
     },
     {
@@ -68,6 +89,10 @@ export const useProjectsStore = defineStore('projects', () => {
         ecsName: 'api-service-task',
         domain: 'api.apiservice.net',
       },
+      devServer: {
+        frontendPort: 5173,
+        backendPort: 3000,
+      },
     },
   ])
 
@@ -81,6 +106,12 @@ export const useProjectsStore = defineStore('projects', () => {
       id: String(Date.now()),
       status: 'inactive',
       createdAt: new Date().toISOString().split('T')[0],
+      frontend: {
+        ...project.frontend,
+        s3Bucket: project.frontendEnabled ? generateS3Name(project.name) : '',
+        cloudfrontName: project.frontendEnabled ? generateCloudfrontName() : '',
+      },
+      devServer: project.devServer || { frontendPort: 5173, backendPort: 3000 },
     }
     projects.value.push(newProject)
     return newProject
