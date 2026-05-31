@@ -38,6 +38,18 @@ export const useProjectsStore = defineStore('projects', () => {
         domain: 'api.mywebapp.com',
       },
       devServer: {
+        frontend: {
+          githubUrl: 'https://github.com/org/my-webapp-frontend',
+          s3Bucket: 'my-webapp-frontend-dev',
+          cloudfrontName: 'EDEV1234ABCD5',
+          domain: 'dev.mywebapp.com',
+        },
+        backend: {
+          githubUrl: 'https://github.com/org/my-webapp-backend',
+          dbName: 'my-webapp-db-dev',
+          ecsName: 'my-webapp-service-dev',
+          domain: 'api.dev.mywebapp.com',
+        },
         frontendPort: 5173,
         backendPort: 3000,
       },
@@ -64,6 +76,8 @@ export const useProjectsStore = defineStore('projects', () => {
         domain: '',
       },
       devServer: {
+        frontend: { githubUrl: '', s3Bucket: '', cloudfrontName: '', domain: '' },
+        backend: { githubUrl: '', dbName: '', ecsName: '', domain: '' },
         frontendPort: 5173,
         backendPort: 3000,
       },
@@ -90,6 +104,13 @@ export const useProjectsStore = defineStore('projects', () => {
         domain: 'api.apiservice.net',
       },
       devServer: {
+        frontend: { githubUrl: '', s3Bucket: '', cloudfrontName: '', domain: '' },
+        backend: {
+          githubUrl: 'https://github.com/org/api-service',
+          dbName: 'api-service-db-dev',
+          ecsName: 'api-service-task-dev',
+          domain: 'api.dev.apiservice.net',
+        },
         frontendPort: 5173,
         backendPort: 3000,
       },
@@ -101,6 +122,15 @@ export const useProjectsStore = defineStore('projects', () => {
   }
 
   function addProject(project) {
+    const s3Bucket = project.frontendEnabled ? generateS3Name(project.name) : ''
+    const cloudfrontName = project.frontendEnabled ? generateCloudfrontName() : ''
+    const devS3Bucket = project.devServerEnabled && project.frontendEnabled
+      ? generateS3Name(project.name + '-dev')
+      : ''
+    const devCloudfrontName = project.devServerEnabled && project.frontendEnabled
+      ? generateCloudfrontName()
+      : ''
+
     const newProject = {
       ...project,
       id: String(Date.now()),
@@ -108,10 +138,24 @@ export const useProjectsStore = defineStore('projects', () => {
       createdAt: new Date().toISOString().split('T')[0],
       frontend: {
         ...project.frontend,
-        s3Bucket: project.frontendEnabled ? generateS3Name(project.name) : '',
-        cloudfrontName: project.frontendEnabled ? generateCloudfrontName() : '',
+        s3Bucket,
+        cloudfrontName,
       },
-      devServer: project.devServer || { frontendPort: 5173, backendPort: 3000 },
+      devServer: {
+        frontend: {
+          ...(project.devServer?.frontend || {}),
+          s3Bucket: devS3Bucket,
+          cloudfrontName: devCloudfrontName,
+        },
+        backend: project.devServer?.backend || {
+          githubUrl: '',
+          dbName: '',
+          ecsName: '',
+          domain: '',
+        },
+        frontendPort: project.devServer?.frontendPort || 5173,
+        backendPort: project.devServer?.backendPort || 3000,
+      },
     }
     projects.value.push(newProject)
     return newProject
