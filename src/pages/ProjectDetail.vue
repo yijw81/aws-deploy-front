@@ -1,20 +1,21 @@
 <template>
-  <AppLayout :breadcrumbs="[{ label: t('nav.projects'), to: '/' }, { label: project ? project.name : '...' }]">
+  <AppLayout :breadcrumbs="[{ label: 'Projects', to: '/' }, { label: project ? project.name : 'Loading...' }]">
+    <!-- Loading -->
+    <div v-if="pageLoading" class="text-center py-20">
+      <svg class="animate-spin h-8 w-8 text-orange-500 mx-auto" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+    </div>
+
     <!-- Not found -->
-    <div v-if="!project" class="text-center py-20">
-      <div class="w-16 h-16 bg-gray-800 rounded-xl mx-auto flex items-center justify-center mb-4">
-        <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <h3 class="text-white font-semibold text-lg mb-2">{{ t('projectDetail.notFound') }}</h3>
-      <p class="text-gray-500 text-sm mb-6">{{ t('projectDetail.notFoundDesc') }}</p>
-      <router-link to="/" class="text-orange-400 hover:text-orange-300 text-sm">{{ t('projectDetail.backToProjects') }}</router-link>
+    <div v-else-if="!project" class="text-center py-20">
+      <h3 class="text-white font-semibold text-lg mb-2">Project not found</h3>
+      <router-link to="/" class="text-orange-400 hover:text-orange-300 text-sm">← Back to Projects</router-link>
     </div>
 
     <div v-else class="max-w-3xl">
-      <!-- Project Header -->
+      <!-- Header -->
       <div class="flex items-start justify-between mb-6">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 bg-orange-500/10 border border-orange-500/20 rounded-xl flex items-center justify-center">
@@ -28,266 +29,156 @@
             <p class="text-gray-400 text-sm mt-0.5">{{ project.description }}</p>
           </div>
         </div>
-        <span :class="statusClass(project.status)" class="text-xs font-medium px-3 py-1 rounded-full">
-          {{ project.status }}
-        </span>
+        <div class="flex items-center gap-3">
+          <span :class="statusClass(project.status)" class="text-xs font-medium px-3 py-1 rounded-full">
+            {{ project.status }}
+          </span>
+          <span v-if="isProvisioning" class="text-xs text-gray-500">{{ project.current_step }}</span>
+        </div>
+      </div>
+
+      <!-- Provisioning progress -->
+      <div v-if="isProvisioning" class="bg-blue-950/30 border border-blue-800/50 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <svg class="animate-spin h-5 w-5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <div>
+          <p class="text-blue-300 text-sm font-medium">Provisioning AWS infrastructure...</p>
+          <p class="text-blue-500 text-xs mt-0.5">Current step: {{ project.current_step || 'Initializing' }}</p>
+        </div>
       </div>
 
       <!-- Meta info -->
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
-          <p class="text-gray-500 text-xs mb-1">{{ t('common.created') }}</p>
-          <p class="text-white text-sm font-medium">{{ project.createdAt }}</p>
+          <p class="text-gray-500 text-xs mb-1">Created</p>
+          <p class="text-white text-sm font-medium">{{ formatDate(project.created_at) }}</p>
         </div>
         <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
-          <p class="text-gray-500 text-xs mb-1">{{ t('common.projectId') }}</p>
-          <p class="text-white text-sm font-medium font-mono">#{{ project.id }}</p>
+          <p class="text-gray-500 text-xs mb-1">Project ID</p>
+          <p class="text-white text-sm font-medium font-mono">{{ project.id.slice(0, 8) }}</p>
         </div>
         <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
-          <p class="text-gray-500 text-xs mb-1">{{ t('common.frontend') }}</p>
-          <p :class="project.frontendEnabled ? 'text-orange-400' : 'text-gray-500'" class="text-sm font-medium">
-            {{ project.frontendEnabled ? t('common.enabled') : t('common.disabled') }}
+          <p class="text-gray-500 text-xs mb-1">Frontend</p>
+          <p :class="project.frontend_enabled ? 'text-orange-400' : 'text-gray-500'" class="text-sm font-medium">
+            {{ project.frontend_enabled ? 'Enabled' : 'Disabled' }}
           </p>
         </div>
         <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
-          <p class="text-gray-500 text-xs mb-1">{{ t('common.backend') }}</p>
-          <p :class="project.backendEnabled ? 'text-blue-400' : 'text-gray-500'" class="text-sm font-medium">
-            {{ project.backendEnabled ? t('common.enabled') : t('common.disabled') }}
-          </p>
-        </div>
-        <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
-          <p class="text-gray-500 text-xs mb-1">{{ t('common.devServer') }}</p>
-          <p :class="project.devServerEnabled ? 'text-purple-400' : 'text-gray-500'" class="text-sm font-medium">
-            {{ project.devServerEnabled ? t('common.enabled') : t('common.disabled') }}
+          <p class="text-gray-500 text-xs mb-1">Backend</p>
+          <p :class="project.backend_enabled ? 'text-blue-400' : 'text-gray-500'" class="text-sm font-medium">
+            {{ project.backend_enabled ? 'Enabled' : 'Disabled' }}
           </p>
         </div>
       </div>
 
-      <!-- Frontend Section -->
-      <div v-if="project.frontendEnabled" class="bg-gray-900 border border-orange-500/20 rounded-xl p-6 mb-5">
-        <div class="flex items-center justify-between mb-5">
+      <!-- Backend URL -->
+      <div v-if="project.backend_url" class="bg-gray-900 border border-green-800/30 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
+        <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <p class="text-gray-500 text-xs">Backend URL</p>
+          <a :href="project.backend_url" target="_blank" class="text-green-400 text-sm hover:text-green-300 font-mono">{{ project.backend_url }}</a>
+        </div>
+      </div>
+
+      <!-- Frontend Config -->
+      <div v-if="project.frontend_enabled" class="bg-gray-900 border border-orange-500/20 rounded-xl p-6 mb-5">
+        <div class="flex items-center justify-between mb-4">
           <h2 class="text-white font-semibold text-base flex items-center gap-2">
             <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            {{ t('projectDetail.frontendDeploy') }}
+            Frontend
             <span class="text-xs bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/20">S3 + CloudFront</span>
           </h2>
           <button
-            @click="deployFrontend"
-            :disabled="deployingFrontend || frontendDeployed"
-            :class="frontendDeployed
-              ? 'bg-green-600 cursor-default'
-              : 'bg-orange-500 hover:bg-orange-600 disabled:bg-orange-800 disabled:cursor-not-allowed'"
-            class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-gray-900"
+            @click="triggerDeploy('frontend')"
+            :disabled="deploying || !isActive"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-900 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
           >
-            <template v-if="frontendDeployed">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ t('common.deployed') }}
-            </template>
-            <template v-else-if="deployingFrontend">
-              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              {{ t('common.deploying') }}
-            </template>
-            <template v-else>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              {{ t('projectDetail.deployFrontend') }}
-            </template>
+            <svg v-if="deploying" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            {{ deploying ? 'Deploying...' : 'Deploy' }}
           </button>
         </div>
-
-        <div v-if="frontendDeployed" class="mb-4 flex items-center gap-2 bg-green-950 border border-green-800 rounded-lg px-4 py-3 text-sm text-green-400">
-          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {{ t('projectDetail.frontendSuccess') }}
-        </div>
-
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InfoField :label="t('common.githubUrl')" :value="project.frontend.githubUrl" type="url" />
-          <InfoField :label="t('projectDetail.s3Bucket')" :value="project.frontend.s3Bucket" />
-          <InfoField :label="t('projectDetail.cloudfrontName')" :value="project.frontend.cloudfrontName" />
-          <InfoField :label="t('common.domain')" :value="project.frontend.domain" type="domain" />
+          <InfoField label="GitHub URL" :value="project.frontend_config?.githubUrl" type="url" />
+          <InfoField label="S3 Bucket" :value="project.frontend_config?.s3Bucket" />
+          <InfoField label="CloudFront" :value="project.frontend_config?.cloudfrontName" />
+          <InfoField label="Domain" :value="project.frontend_config?.domain" type="domain" />
         </div>
       </div>
 
-      <!-- Backend Section -->
-      <div v-if="project.backendEnabled" class="bg-gray-900 border border-blue-500/20 rounded-xl p-6">
-        <div class="flex items-center justify-between mb-5">
+      <!-- Backend Config -->
+      <div v-if="project.backend_enabled" class="bg-gray-900 border border-blue-500/20 rounded-xl p-6 mb-5">
+        <div class="flex items-center justify-between mb-4">
           <h2 class="text-white font-semibold text-base flex items-center gap-2">
             <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
             </svg>
-            {{ t('projectDetail.backendDeploy') }}
-            <span class="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">ECS + RDS</span>
+            Backend
+            <span class="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">ECS Fargate + RDS</span>
           </h2>
           <button
-            @click="deployBackend"
-            :disabled="deployingBackend || backendDeployed"
-            :class="backendDeployed
-              ? 'bg-green-600 cursor-default'
-              : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900 disabled:cursor-not-allowed'"
-            class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-gray-900"
+            @click="triggerDeploy('backend')"
+            :disabled="deploying || !isActive"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
           >
-            <template v-if="backendDeployed">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ t('common.deployed') }}
-            </template>
-            <template v-else-if="deployingBackend">
-              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              {{ t('common.deploying') }}
-            </template>
-            <template v-else>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              {{ t('projectDetail.deployBackend') }}
-            </template>
+            <svg v-if="deploying" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            {{ deploying ? 'Deploying...' : 'Deploy' }}
           </button>
         </div>
-
-        <div v-if="backendDeployed" class="mb-4 flex items-center gap-2 bg-green-950 border border-green-800 rounded-lg px-4 py-3 text-sm text-green-400">
-          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {{ t('projectDetail.backendSuccess') }}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <InfoField label="GitHub URL" :value="project.backend_config?.githubUrl" type="url" />
+          <InfoField label="DB Name" :value="project.backend_config?.dbName" />
+          <InfoField label="ECS Name" :value="project.backend_config?.ecsName" />
+          <InfoField label="Domain" :value="project.backend_config?.domain" type="domain" />
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InfoField :label="t('common.githubUrl')" :value="project.backend.githubUrl" type="url" />
-          <InfoField :label="t('projectDetail.dbName')" :value="project.backend.dbName" />
-          <InfoField :label="t('projectDetail.ecsName')" :value="project.backend.ecsName" />
-          <InfoField :label="t('common.domain')" :value="project.backend.domain" type="domain" />
+        <!-- Infrastructure -->
+        <div v-if="project.infrastructure" class="mt-4 pt-4 border-t border-gray-800">
+          <p class="text-gray-500 text-xs uppercase tracking-wider font-medium mb-3">Infrastructure</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <InfoField label="ALB DNS" :value="project.infrastructure.alb_dns" />
+            <InfoField label="ECR Repository" :value="project.infrastructure.ecr_repository_uri" />
+            <InfoField label="ECS Cluster" :value="project.infrastructure.ecs_cluster_arn" />
+            <InfoField label="CodeBuild Project" :value="project.infrastructure.codebuild_project_name" />
+          </div>
         </div>
       </div>
 
-      <!-- Dev Server Section -->
-      <div v-if="project.devServerEnabled" class="space-y-4 mt-5">
-        <!-- Dev Frontend -->
-        <div v-if="project.frontendEnabled" class="bg-gray-900 border border-purple-500/20 rounded-xl p-6">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-white font-semibold text-base flex items-center gap-2">
-              <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              {{ t('projectDetail.devFrontendSection') }}
-              <span class="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20">Dev · S3 + CloudFront</span>
-            </h2>
-            <button
-              @click="deployDevFrontend"
-              :disabled="deployingDevFrontend || devFrontendDeployed"
-              :class="devFrontendDeployed
-                ? 'bg-green-600 cursor-default'
-                : 'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-900 disabled:cursor-not-allowed'"
-              class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-gray-900"
-            >
-              <template v-if="devFrontendDeployed">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                {{ t('common.deployed') }}
-              </template>
-              <template v-else-if="deployingDevFrontend">
-                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                {{ t('common.deploying') }}
-              </template>
-              <template v-else>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                {{ t('projectDetail.deployDevFrontend') }}
-              </template>
-            </button>
-          </div>
-          <div v-if="devFrontendDeployed" class="mb-4 flex items-center gap-2 bg-green-950 border border-green-800 rounded-lg px-4 py-3 text-sm text-green-400">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {{ t('projectDetail.devFrontendSuccess') }}
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InfoField :label="t('common.githubUrl')" :value="project.devServer?.frontend?.githubUrl" type="url" />
-            <InfoField :label="t('projectDetail.s3Bucket')" :value="project.devServer?.frontend?.s3Bucket" />
-            <InfoField :label="t('projectDetail.cloudfrontName')" :value="project.devServer?.frontend?.cloudfrontName" />
-            <InfoField :label="t('common.domain')" :value="project.devServer?.frontend?.domain" type="domain" />
-          </div>
-        </div>
+      <!-- Deploy error -->
+      <div v-if="deployError" class="flex items-center gap-2 bg-red-950 border border-red-800 rounded-lg px-4 py-3 text-sm text-red-400 mb-5">
+        {{ deployError }}
+      </div>
 
-        <!-- Dev Backend -->
-        <div v-if="project.backendEnabled" class="bg-gray-900 border border-purple-500/20 rounded-xl p-6">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-white font-semibold text-base flex items-center gap-2">
-              <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
-              </svg>
-              {{ t('projectDetail.devBackendSection') }}
-              <span class="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20">Dev · ECS + RDS</span>
-            </h2>
-            <button
-              @click="deployDevBackend"
-              :disabled="deployingDevBackend || devBackendDeployed"
-              :class="devBackendDeployed
-                ? 'bg-green-600 cursor-default'
-                : 'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-900 disabled:cursor-not-allowed'"
-              class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-gray-900"
-            >
-              <template v-if="devBackendDeployed">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                {{ t('common.deployed') }}
-              </template>
-              <template v-else-if="deployingDevBackend">
-                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                {{ t('common.deploying') }}
-              </template>
-              <template v-else>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                {{ t('projectDetail.deployDevBackend') }}
-              </template>
-            </button>
-          </div>
-          <div v-if="devBackendDeployed" class="mb-4 flex items-center gap-2 bg-green-950 border border-green-800 rounded-lg px-4 py-3 text-sm text-green-400">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {{ t('projectDetail.devBackendSuccess') }}
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InfoField :label="t('common.githubUrl')" :value="project.devServer?.backend?.githubUrl" type="url" />
-            <InfoField :label="t('projectDetail.dbName')" :value="project.devServer?.backend?.dbName" />
-            <InfoField :label="t('projectDetail.ecsName')" :value="project.devServer?.backend?.ecsName" />
-            <InfoField :label="t('common.domain')" :value="project.devServer?.backend?.domain" type="domain" />
+      <!-- Deployments -->
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <h2 class="text-white font-semibold text-base mb-4">Deployment History</h2>
+        <div v-if="deployments.length === 0" class="text-center py-8 text-gray-500 text-sm">
+          No deployments yet.
+        </div>
+        <div v-else class="space-y-2">
+          <div v-for="d in deployments" :key="d.id"
+            class="flex items-center justify-between py-3 px-4 bg-gray-800/50 rounded-lg">
+            <div class="flex items-center gap-3">
+              <span :class="deployStatusClass(d.status)" class="w-2 h-2 rounded-full flex-shrink-0"></span>
+              <div>
+                <p class="text-white text-sm font-mono">{{ d.codebuild_build_id || d.id.slice(0, 12) }}</p>
+                <p class="text-gray-500 text-xs">{{ d.branch }} · {{ formatDate(d.started_at) }}</p>
+              </div>
+            </div>
+            <span :class="deployStatusTextClass(d.status)" class="text-xs font-medium">{{ d.status }}</span>
           </div>
         </div>
       </div>
@@ -296,78 +187,98 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
-import { useProjectsStore } from '../stores/projects'
-
-const { t } = useI18n()
-
-const InfoField = {
-  props: ['label', 'value', 'type'],
-  template: `
-    <div class="space-y-1">
-      <p class="text-xs text-gray-500 uppercase tracking-wider font-medium">{{ label }}</p>
-      <p v-if="value === null || value === undefined || value === ''" class="text-gray-600 text-sm italic">Not configured</p>
-      <a v-else-if="type === 'url'" :href="value" target="_blank" rel="noopener"
-        class="text-blue-400 hover:text-blue-300 text-sm truncate block transition-colors">{{ value }}</a>
-      <p v-else-if="type === 'domain'" class="text-green-400 text-sm font-mono">{{ value }}</p>
-      <p v-else class="text-white text-sm font-mono">{{ value }}</p>
-    </div>
-  `,
-}
+import InfoField from '../components/InfoField.vue'
+import { api } from '../api/index'
 
 const route = useRoute()
-const store = useProjectsStore()
+const project = ref(null)
+const deployments = ref([])
+const pageLoading = ref(true)
+const deploying = ref(false)
+const deployError = ref('')
+let pollTimer = null
 
-const project = computed(() => store.getProject(route.params.id))
+const PROVISIONING_STATUSES = ['PROVISIONING', 'BUILDING', 'DEPLOYING']
+const isProvisioning = computed(() => PROVISIONING_STATUSES.includes(project.value?.status))
+const isActive = computed(() => project.value?.status === 'ACTIVE')
 
-const deployingFrontend = ref(false)
-const frontendDeployed = ref(false)
-const deployingBackend = ref(false)
-const backendDeployed = ref(false)
-const deployingDevFrontend = ref(false)
-const devFrontendDeployed = ref(false)
-const deployingDevBackend = ref(false)
-const devBackendDeployed = ref(false)
-
-async function deployFrontend() {
-  deployingFrontend.value = true
-  await new Promise((r) => setTimeout(r, 2000))
-  deployingFrontend.value = false
-  frontendDeployed.value = true
-  store.updateProject(project.value.id, { status: 'active' })
+async function loadProject() {
+  try {
+    project.value = await api.getProject(route.params.id)
+  } catch (e) {
+    project.value = null
+  }
 }
 
-async function deployBackend() {
-  deployingBackend.value = true
-  await new Promise((r) => setTimeout(r, 2500))
-  deployingBackend.value = false
-  backendDeployed.value = true
-  store.updateProject(project.value.id, { status: 'active' })
+async function loadDeployments() {
+  try {
+    deployments.value = await api.getDeployments(route.params.id)
+  } catch (e) {
+    // ignore
+  }
 }
 
-async function deployDevFrontend() {
-  deployingDevFrontend.value = true
-  await new Promise((r) => setTimeout(r, 2000))
-  deployingDevFrontend.value = false
-  devFrontendDeployed.value = true
+async function triggerDeploy(type) {
+  deployError.value = ''
+  deploying.value = true
+  try {
+    await api.triggerDeploy(route.params.id)
+    await Promise.all([loadProject(), loadDeployments()])
+  } catch (e) {
+    deployError.value = e.message || 'Deployment failed'
+  } finally {
+    deploying.value = false
+  }
 }
 
-async function deployDevBackend() {
-  deployingDevBackend.value = true
-  await new Promise((r) => setTimeout(r, 2500))
-  deployingDevBackend.value = false
-  devBackendDeployed.value = true
+function startPolling() {
+  if (pollTimer) return
+  pollTimer = setInterval(async () => {
+    await loadProject()
+    if (!isProvisioning.value) {
+      clearInterval(pollTimer)
+      pollTimer = null
+      await loadDeployments()
+    }
+  }, 5000)
+}
+
+onMounted(async () => {
+  await Promise.all([loadProject(), loadDeployments()])
+  pageLoading.value = false
+  if (isProvisioning.value) startPolling()
+})
+
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer)
+})
+
+function formatDate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleString()
 }
 
 function statusClass(status) {
-  return {
-    active: 'bg-green-500/10 text-green-400 border border-green-500/20',
-    deploying: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
-    inactive: 'bg-gray-700/50 text-gray-400 border border-gray-600/20',
-    error: 'bg-red-500/10 text-red-400 border border-red-500/20',
-  }[status] || 'bg-gray-700/50 text-gray-400 border border-gray-600/20'
+  const map = {
+    ACTIVE: 'bg-green-500/10 text-green-400 border border-green-500/20',
+    BUILDING: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+    DEPLOYING: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+    PROVISIONING: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+    FAILED: 'bg-red-500/10 text-red-400 border border-red-500/20',
+  }
+  return map[status] || 'bg-gray-700/50 text-gray-400 border border-gray-600/20'
+}
+
+function deployStatusClass(status) {
+  const map = { SUCCEEDED: 'bg-green-400', BUILDING: 'bg-yellow-400', FAILED: 'bg-red-400', PENDING: 'bg-gray-400' }
+  return map[status] || 'bg-gray-400'
+}
+
+function deployStatusTextClass(status) {
+  const map = { SUCCEEDED: 'text-green-400', BUILDING: 'text-yellow-400', FAILED: 'text-red-400', PENDING: 'text-gray-400' }
+  return map[status] || 'text-gray-400'
 }
 </script>
