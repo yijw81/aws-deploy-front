@@ -213,33 +213,6 @@
             </div>
           </div>
 
-          <!-- Dev Ports -->
-          <div class="bg-gray-900 border border-purple-500/20 rounded-xl p-6 space-y-4">
-            <h2 class="text-white font-semibold text-base flex items-center gap-2">
-              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
-              {{ t('projectCreate.devPorts') }}
-              <span class="ml-auto text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20">Development</span>
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1.5">
-                  {{ t('projectCreate.frontendPort') }}
-                </label>
-                <input v-model.number="form.devServer.frontendPort" type="number" placeholder="5173" min="1024" max="65535"
-                  class="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition text-sm" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1.5">
-                  {{ t('projectCreate.backendPort') }}
-                </label>
-                <input v-model.number="form.devServer.backendPort" type="number" placeholder="3000" min="1024" max="65535"
-                  class="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition text-sm" />
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Error message -->
@@ -322,8 +295,6 @@ const form = ref({
       ecsName: '',
       domain: '',
     },
-    frontendPort: 5173,
-    backendPort: 3000,
   },
 })
 
