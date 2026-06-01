@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between h-14">
           <!-- Logo -->
           <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 cursor-pointer" @click="router.push('/')">
               <div class="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
