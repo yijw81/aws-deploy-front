@@ -33,6 +33,18 @@
         </span>
       </div>
 
+      <!-- GitHub URL 미설정 안내 배너 -->
+      <div v-if="isPendingGithub" class="mb-6 flex items-start gap-3 bg-yellow-950 border border-yellow-700 rounded-xl px-5 py-4 text-sm text-yellow-300">
+        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <p class="font-semibold mb-0.5">GitHub URL이 설정되지 않았습니다</p>
+          <p class="text-yellow-400/80">아래 섹션에서 GitHub URL을 입력하고 저장하면 배포가 시작됩니다.</p>
+        </div>
+      </div>
+
       <!-- Meta info -->
       <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
         <div class="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
@@ -75,6 +87,7 @@
             <span class="text-xs bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/20">S3 + CloudFront</span>
           </h2>
           <button
+            v-if="!isPendingGithub"
             @click="deployFrontend"
             :disabled="deployingFrontend || frontendDeployed"
             :class="frontendDeployed
@@ -114,8 +127,40 @@
           Frontend deployed successfully! CloudFront distribution updated.
         </div>
 
+        <!-- GitHub URL 편집 영역 -->
+        <div class="mb-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-1.5">GitHub URL</p>
+          <div v-if="editingFrontendGithub" class="flex gap-2">
+            <input
+              v-model="frontendGithubInput"
+              type="url"
+              placeholder="https://github.com/org/repo"
+              class="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            />
+            <button @click="saveFrontendGithub" :disabled="savingFrontendGithub"
+              class="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-800 text-white text-sm font-semibold rounded-lg transition-colors">
+              {{ savingFrontendGithub ? '저장 중...' : '저장' }}
+            </button>
+            <button @click="cancelFrontendGithub"
+              class="px-3 py-2 text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 rounded-lg text-sm transition-colors">
+              취소
+            </button>
+          </div>
+          <div v-else class="flex items-center gap-2">
+            <a v-if="project.frontend.githubUrl" :href="project.frontend.githubUrl" target="_blank" rel="noopener"
+              class="text-blue-400 hover:text-blue-300 text-sm truncate transition-colors">{{ project.frontend.githubUrl }}</a>
+            <span v-else class="text-gray-600 text-sm italic">Not configured</span>
+            <button @click="startEditFrontendGithub"
+              class="ml-1 text-gray-500 hover:text-orange-400 transition-colors flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InfoField label="GitHub URL" :value="project.frontend.githubUrl" type="url" />
           <InfoField label="S3 Bucket" :value="project.frontend.s3Bucket" icon="bucket" />
           <InfoField label="CloudFront Name" :value="project.frontend.cloudfrontName" />
           <InfoField label="Domain" :value="project.frontend.domain" type="domain" />
@@ -134,6 +179,7 @@
             <span class="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">ECS + RDS</span>
           </h2>
           <button
+            v-if="!isPendingGithub"
             @click="deployBackend"
             :disabled="deployingBackend || backendDeployed"
             :class="backendDeployed
@@ -173,8 +219,40 @@
           Backend deployed successfully! ECS service updated and running.
         </div>
 
+        <!-- GitHub URL 편집 영역 -->
+        <div class="mb-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-1.5">GitHub URL</p>
+          <div v-if="editingBackendGithub" class="flex gap-2">
+            <input
+              v-model="backendGithubInput"
+              type="url"
+              placeholder="https://github.com/org/repo-backend"
+              class="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+            <button @click="saveBackendGithub" :disabled="savingBackendGithub"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900 text-white text-sm font-semibold rounded-lg transition-colors">
+              {{ savingBackendGithub ? '저장 중...' : '저장' }}
+            </button>
+            <button @click="cancelBackendGithub"
+              class="px-3 py-2 text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 rounded-lg text-sm transition-colors">
+              취소
+            </button>
+          </div>
+          <div v-else class="flex items-center gap-2">
+            <a v-if="project.backend.githubUrl" :href="project.backend.githubUrl" target="_blank" rel="noopener"
+              class="text-blue-400 hover:text-blue-300 text-sm truncate transition-colors">{{ project.backend.githubUrl }}</a>
+            <span v-else class="text-gray-600 text-sm italic">Not configured</span>
+            <button @click="startEditBackendGithub"
+              class="ml-1 text-gray-500 hover:text-blue-400 transition-colors flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InfoField label="GitHub URL" :value="project.backend.githubUrl" type="url" />
           <InfoField label="DB Name" :value="project.backend.dbName" />
           <InfoField label="ECS Name" :value="project.backend.ecsName" />
           <InfoField label="Domain" :value="project.backend.domain" type="domain" />
@@ -245,7 +323,6 @@ import { useRoute } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useProjectsStore } from '../stores/projects'
 
-// Inline sub-component for info fields
 const InfoField = {
   props: ['label', 'value', 'type'],
   template: `
@@ -265,12 +342,69 @@ const store = useProjectsStore()
 
 const project = computed(() => store.getProject(route.params.id))
 
+const isPendingGithub = computed(() => project.value?.status === 'PENDING_GITHUB')
+
 const deployingFrontend = ref(false)
 const frontendDeployed = ref(false)
 const deployingBackend = ref(false)
 const backendDeployed = ref(false)
 const deployingDev = ref(false)
 const devDeployed = ref(false)
+
+// Frontend GitHub URL 편집
+const editingFrontendGithub = ref(false)
+const frontendGithubInput = ref('')
+const savingFrontendGithub = ref(false)
+
+function startEditFrontendGithub() {
+  frontendGithubInput.value = project.value.frontend.githubUrl || ''
+  editingFrontendGithub.value = true
+}
+
+function cancelFrontendGithub() {
+  editingFrontendGithub.value = false
+}
+
+async function saveFrontendGithub() {
+  savingFrontendGithub.value = true
+  await new Promise((r) => setTimeout(r, 400))
+  store.updateProject(project.value.id, {
+    frontend: { ...project.value.frontend, githubUrl: frontendGithubInput.value },
+  })
+  // GitHub URL이 새로 추가되고 pending 상태였으면 상태 변경
+  if (isPendingGithub.value && frontendGithubInput.value) {
+    store.updateProject(project.value.id, { status: 'inactive' })
+  }
+  savingFrontendGithub.value = false
+  editingFrontendGithub.value = false
+}
+
+// Backend GitHub URL 편집
+const editingBackendGithub = ref(false)
+const backendGithubInput = ref('')
+const savingBackendGithub = ref(false)
+
+function startEditBackendGithub() {
+  backendGithubInput.value = project.value.backend.githubUrl || ''
+  editingBackendGithub.value = true
+}
+
+function cancelBackendGithub() {
+  editingBackendGithub.value = false
+}
+
+async function saveBackendGithub() {
+  savingBackendGithub.value = true
+  await new Promise((r) => setTimeout(r, 400))
+  store.updateProject(project.value.id, {
+    backend: { ...project.value.backend, githubUrl: backendGithubInput.value },
+  })
+  if (isPendingGithub.value && backendGithubInput.value) {
+    store.updateProject(project.value.id, { status: 'inactive' })
+  }
+  savingBackendGithub.value = false
+  editingBackendGithub.value = false
+}
 
 async function deployFrontend() {
   deployingFrontend.value = true
@@ -301,6 +435,7 @@ function statusClass(status) {
     deploying: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
     inactive: 'bg-gray-700/50 text-gray-400 border border-gray-600/20',
     error: 'bg-red-500/10 text-red-400 border border-red-500/20',
+    PENDING_GITHUB: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
   }[status] || 'bg-gray-700/50 text-gray-400 border border-gray-600/20'
 }
 </script>

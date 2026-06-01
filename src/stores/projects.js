@@ -89,7 +89,13 @@ export const useProjectsStore = defineStore('projects', () => {
   function updateProject(id, updates) {
     const idx = projects.value.findIndex((p) => p.id === id)
     if (idx !== -1) {
-      projects.value[idx] = { ...projects.value[idx], ...updates }
+      const current = projects.value[idx]
+      projects.value[idx] = {
+        ...current,
+        ...updates,
+        frontend: updates.frontend ? { ...current.frontend, ...updates.frontend } : current.frontend,
+        backend: updates.backend ? { ...current.backend, ...updates.backend } : current.backend,
+      }
     }
   }
 
