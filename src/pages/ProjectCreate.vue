@@ -136,6 +136,21 @@
             <input v-model="form.backend.domain" type="text" :placeholder="backendDomainPlaceholder"
               class="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition text-sm" />
           </div>
+
+          <!-- Webhook 설정 -->
+          <div class="pt-1 border-t border-gray-800">
+            <label class="flex items-center justify-between cursor-pointer group">
+              <div>
+                <p class="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">GitHub Webhook 자동 빌드</p>
+                <p class="text-xs text-gray-500 mt-0.5">main 브랜치 push 시 CodeBuild 자동 실행</p>
+              </div>
+              <div class="relative flex-shrink-0">
+                <input type="checkbox" v-model="form.backend.webhookEnabled" class="sr-only" />
+                <div :class="form.backend.webhookEnabled ? 'bg-blue-500' : 'bg-gray-700'" class="w-10 h-6 rounded-full transition-colors"></div>
+                <div :class="form.backend.webhookEnabled ? 'translate-x-4' : 'translate-x-0'" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
+              </div>
+            </label>
+          </div>
         </div>
 
         <!-- Error message -->
@@ -202,6 +217,7 @@ const form = ref({
     dbName: '',
     ecsName: '',
     domain: '',
+    webhookEnabled: false,
   },
 })
 

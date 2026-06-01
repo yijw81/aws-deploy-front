@@ -23,6 +23,7 @@ export const useProjectsStore = defineStore('projects', () => {
         dbName: 'my-webapp-db',
         ecsName: 'my-webapp-service',
         domain: 'api.mywebapp.com',
+        webhookEnabled: true,
       },
     },
     {
@@ -67,6 +68,7 @@ export const useProjectsStore = defineStore('projects', () => {
         dbName: 'api-service-db',
         ecsName: 'api-service-task',
         domain: 'api.apiservice.net',
+        webhookEnabled: false,
       },
     },
   ])

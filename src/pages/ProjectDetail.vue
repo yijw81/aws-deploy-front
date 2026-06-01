@@ -252,10 +252,35 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <InfoField label="DB Name" :value="project.backend.dbName" />
           <InfoField label="ECS Name" :value="project.backend.ecsName" />
           <InfoField label="Domain" :value="project.backend.domain" type="domain" />
+        </div>
+
+        <!-- Webhook 설정 -->
+        <div class="pt-4 border-t border-gray-800">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-white">GitHub Webhook 자동 빌드</p>
+              <p class="text-xs text-gray-500 mt-0.5">main 브랜치 push 시 CodeBuild 자동 실행</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span v-if="savingWebhook" class="text-xs text-gray-400">저장 중...</span>
+              <button @click="toggleWebhook" :disabled="savingWebhook" class="relative flex-shrink-0">
+                <div :class="project.backend.webhookEnabled ? 'bg-blue-500' : 'bg-gray-700'"
+                  class="w-10 h-6 rounded-full transition-colors"></div>
+                <div :class="project.backend.webhookEnabled ? 'translate-x-4' : 'translate-x-0'"
+                  class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
+              </button>
+            </div>
+          </div>
+          <p v-if="project.backend.webhookEnabled" class="text-xs text-blue-400 mt-2 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Webhook 활성화됨 — push 이벤트 시 자동 빌드
+          </p>
         </div>
       </div>
       <!-- Dev Server Section -->
@@ -404,6 +429,18 @@ async function saveBackendGithub() {
   }
   savingBackendGithub.value = false
   editingBackendGithub.value = false
+}
+
+// Webhook 토글
+const savingWebhook = ref(false)
+
+async function toggleWebhook() {
+  savingWebhook.value = true
+  await new Promise((r) => setTimeout(r, 500))
+  store.updateProject(project.value.id, {
+    backend: { ...project.value.backend, webhookEnabled: !project.value.backend.webhookEnabled },
+  })
+  savingWebhook.value = false
 }
 
 async function deployFrontend() {
