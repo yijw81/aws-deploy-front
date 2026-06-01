@@ -1,4 +1,5 @@
-const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+// const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+const BASE_URL = 'https://deploy-api.firsttree.net'
 
 function getHeaders() {
   const token = localStorage.getItem('auth_token')
