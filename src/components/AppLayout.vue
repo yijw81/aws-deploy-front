@@ -26,6 +26,11 @@
               :class="{ 'text-white bg-gray-800': $route.path === '/' || $route.path.startsWith('/projects') }">
               Projects
             </router-link>
+            <router-link to="/accounts"
+              class="px-3 py-2 rounded text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+              :class="{ 'text-white bg-gray-800': $route.path.startsWith('/accounts') }">
+              Accounts
+            </router-link>
           </nav>
 
           <!-- User menu -->

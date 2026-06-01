@@ -3,6 +3,10 @@ import Login from '../pages/Login.vue'
 import ProjectList from '../pages/ProjectList.vue'
 import ProjectCreate from '../pages/ProjectCreate.vue'
 import ProjectDetail from '../pages/ProjectDetail.vue'
+import AccountList from '../pages/AccountList.vue'
+import AccountCreate from '../pages/AccountCreate.vue'
+import AccountDetail from '../pages/AccountDetail.vue'
+import ChangePassword from '../pages/ChangePassword.vue'
 
 const routes = [
   {
@@ -25,6 +29,26 @@ const routes = [
     path: '/projects/:id',
     name: 'ProjectDetail',
     component: ProjectDetail,
+  },
+  {
+    path: '/accounts',
+    name: 'AccountList',
+    component: AccountList,
+  },
+  {
+    path: '/accounts/create',
+    name: 'AccountCreate',
+    component: AccountCreate,
+  },
+  {
+    path: '/accounts/:id',
+    name: 'AccountDetail',
+    component: AccountDetail,
+  },
+  {
+    path: '/accounts/:id/change-password',
+    name: 'ChangePassword',
+    component: ChangePassword,
   },
 ]
 
